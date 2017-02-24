@@ -11,6 +11,12 @@
 --
 local sock = require("lib/sock")
 
+local client = {}
+local server = {}
+-- update variables
+local updaterate = 0.5
+local lag = 0
+
 -- ## love.load
 --
 function love.load()
@@ -44,8 +50,13 @@ end
 -- ## love.update
 --
 function love.update(dt)
-    server:update()
-    client:update()
+    lag = lag + dt
+    if lag > updaterate then
+        server:update()
+        client:update()
+
+        lag = lag - updaterate
+    end
 end
 
 -- ## love.draw
