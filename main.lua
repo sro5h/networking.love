@@ -10,6 +10,7 @@
 -- ## modules
 --
 local sock = require("lib/sock")
+local tick = require("tick")
 
 local client = {}
 local server = {}
@@ -54,6 +55,9 @@ function love.update(dt)
     if lag > updaterate then
         server:update()
         client:update()
+
+        -- test tick module
+        print(tick.new().id)
 
         lag = lag - updaterate
     end
