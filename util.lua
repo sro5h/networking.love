@@ -1,6 +1,12 @@
 local util = {}
 
-function util.print_r ( t )
+function util.isCallable(x)
+    if type(x) == "function" then return true end
+    local mt = getmetatable(x)
+    return mt and mt.__call ~= nil
+end
+
+function util.printTable(t)
     local print_r_cache={}
     local function sub_print_r(t,indent)
         if (print_r_cache[tostring(t)]) then
