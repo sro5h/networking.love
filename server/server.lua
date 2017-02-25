@@ -7,6 +7,7 @@
 -- ## modules
 --
 local enet = require("enet")
+local util = require("../util")
 
 -- ## server
 --
@@ -65,6 +66,7 @@ local function onConnect(self, peer)
     local id = self:_newId()
     self.ids[peer:connect_id()] = id
     print(peer,"[id = " .. id .. "]" .. " connected.")
+    util.printTable(getmetatable(peer))
 
     -- Send id to peer
     peer:send(self._serialize({

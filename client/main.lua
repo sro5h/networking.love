@@ -9,16 +9,13 @@
 
 -- ## modules
 --
-local enet = require("enet")
-local bitser = require("lib/bitser")
-local tick = require("../tick")
+local Client = require("client")
+local Bitser = require("lib/bitser")
 
 -- ## variables
 --
 local isDown = love.keyboard.isDown
 local client
-local clientId
-local server
 
 -- ### update variables
 --
@@ -63,8 +60,9 @@ function love.load()
     -- Set window title
     love.window.setTitle("Client")
 
-    client = enet.host_create()
-    server = client:connect("localhost:22122")
+    client = Client.new()
+    client:setSerialization(Bitser.dumps, Bitser.loads)
+    client:connect("localhost:22122")
 end
 
 -- ## love.update
@@ -73,27 +71,10 @@ function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
         -- Update movement
-        updateMovement()
+        --updateMovement()
 
-        -- Get events
-        local event = client:service(0)
-        while event do
-            if event.type == "connect" then
-                print("Connected to server.")
-
-            elseif event.type == "disconnect" then
-                print(event.peer, " disconnected.")
-
-            elseif event.type == "receive" then
-                local package = bitser.loads(event.data)
-                if package.type == "id" then
-                    print("Received id [" .. package.data .. "].")
-                    clientId = package.data
-                end
-            end
-
-            event = client:service(0)
-        end
+        -- Update client
+        client:update()
 
         lag = lag - updaterate
     end
@@ -107,8 +88,5 @@ end
 
 -- ## love.quit
 function love.quit()
-    if clientId then
-        server:disconnect(clientId)
-        client:flush()
-    end
+    client:disconnect()
 end
