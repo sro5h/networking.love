@@ -1,1 +1,4 @@
+# windows run scripts
 run.bat
+client.bat
+server.bat
