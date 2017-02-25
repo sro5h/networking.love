@@ -1,5 +1,6 @@
 --
 -- # client
+--
 -- Basic networking tests using the [Love2d](http://love2d.org) framework
 --
 -- **License:** MIT
@@ -11,28 +12,47 @@
 local sock = require("../lib/sock")
 local tick = require("../tick")
 
+-- ## variables
+--
+local isDown = love.keyboard.isDown
 local client = {}
--- update variables
-local updaterate = 0.5
+
+-- ### update variables
+--
+local updaterate = 1/16
 local lag = 0
+
+-- ## callbacks
+--
+
+-- ### onConnect
+--
+-- Called if the connection to the server is established
+--
+-- 'data' is null
+--
+local function onConnect(data)
+    print("Connected to the server." .. data)
+end
+
+-- ### onPing
+--
+-- Called if the server sends a ping event
+--
+-- 'msg' is a string
+--
+local function onPing(msg)
+    print(msg)
+end
 
 -- ## love.load
 --
 function love.load()
     client = sock.newClient("localhost", 22122)
 
-    -- If the connect/disconnect callbacks aren't defined some warnings will
-    -- be thrown, but nothing bad will happen.
-
-    -- Called when a connection is made to the server
-    client:on("connect", function(data)
-        print("Client connected to the server.")
-    end)
-
-    -- Custom callback, called whenever you send the event from the server
-    client:on("hello", function(msg)
-        print(msg)
-    end)
+    -- Wire up callbacks
+    client:on("connect", onConnect)
+    client:on("ping", onPing)
 
     client:connect()
 end
@@ -42,10 +62,14 @@ end
 function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
-        client:update()
+        if isDown('a') then
+            client:send("movement", {
+                dx = -1,
+                dy = 0
+            })
+        end
 
-        -- test tick module
-        print(tick.new().id)
+        client:update()
 
         lag = lag - updaterate
     end
@@ -55,4 +79,9 @@ end
 --
 function love.draw()
 
+end
+
+-- ## love.quit
+function love.quit()
+    client:disconnectNow(client:getIndex())
 end

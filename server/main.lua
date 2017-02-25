@@ -11,24 +11,62 @@
 local sock = require("../lib/sock")
 local tick = require("../tick")
 
+-- ## variables
+--
 local server = {}
--- update variables
-local updaterate = 0.5
+
+-- ### update variables
+--
+local updaterate = 1/16
 local lag = 0
+
+-- ## callbacks
+--
+
+-- ### onConnect
+--
+-- Called if a client connects
+--
+-- 'data'
+-- 'client' is the client
+--
+local function onConnect(data, client)
+    print("Client " .. client:getIndex() .. " connected.")
+    local msg = "Ping."
+    client:send("ping", msg)
+end
+
+-- ### onDisconnect
+--
+-- Called if a client disconnects
+--
+-- 'data'
+-- 'client' is the client
+--
+local function onDisconnect(data, client)
+        print("Client " .. client:getIndex() .. " disconnected.")
+end
+
+-- ### onMovement
+--
+-- Called if a client moves
+--
+-- 'data'   is a table
+-- 'client' is the client
+--
+local function onMovement(data, client)
+    print("Client " .. client:getIndex() .. " moves (" .. data.dx .. ", " .. data.dy .. ").")
+end
 
 -- ## love.load
 --
 function love.load()
     server = sock.newServer("localhost", 22122)
 
-    -- If the connect/disconnect callbacks aren't defined some warnings will
-    -- be thrown, but nothing bad will happen.
-
-    -- Called when someone connects to the server
-    server:on("connect", function(data, peer)
-        local msg = "Hello from server!"
-        peer:send("hello", msg)
-    end)
+    -- Wire up callbacks
+    server:on("connect", onConnect)
+    server:on("disconnect", onDisconnect)
+    server:on("movement", onMovement)
 end
 
 -- ## love.update
@@ -37,9 +75,6 @@ function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
         server:update()
-
-        -- test tick module
-        print(tick.new().id)
 
         lag = lag - updaterate
     end
