@@ -9,13 +9,15 @@
 
 -- ## modules
 --
-local sock = require("../lib/sock")
+local enet = require("enet")
+local bitser = require("lib/bitser")
 local tick = require("../tick")
 
 -- ## variables
 --
 local isDown = love.keyboard.isDown
-local client = {}
+local client
+local server
 
 -- ### update variables
 --
@@ -51,42 +53,14 @@ local function updateMovement()
     client:send("movement", movement)
 end
 
--- ## callbacks
---
-
--- ### onConnect
---
--- Called if the connection to the server is established
---
--- 'data' is null
---
-local function onConnect(data)
-    print("Connected to the server." .. data)
-end
-
--- ### onPing
---
--- Called if the server sends a ping event
---
--- 'msg' is a string
---
-local function onPing(msg)
-    print(msg)
-end
-
 -- ## love.load
 --
 function love.load()
-    client = sock.newClient("localhost", 22122)
+    -- Set window title
+    love.window.setTitle("Client")
 
-    -- Wire up callbacks
-    client:on("connect", onConnect)
-    client:on("disconnect", function()
-        print("DISCONNECTED")
-    end)
-    client:on("ping", onPing)
-
-    client:connect()
+    client = enet.host_create()
+    server = client:connect("localhost:22122")
 end
 
 -- ## love.update
@@ -94,9 +68,18 @@ end
 function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
-        updateMovement()
+        -- Get events
+        local event = client:service(0)
+        while event do
+            if event.type == "connect" then
+                print(event.peer, " connected.")
+                event.peer:send(bitser.dumps({ msg="ping" }))
+            elseif event.type == "disconnect" then
+                print(event.peer, " disconnected.")
+            end
 
-        client:update()
+            event = client:service(0)
+        end
 
         lag = lag - updaterate
     end
@@ -110,5 +93,6 @@ end
 
 -- ## love.quit
 function love.quit()
-    client:disconnectNow(client:getIndex())
+    server:disconnect()
+    client:flush()
 end
