@@ -14,11 +14,27 @@ local tick = require("../tick")
 -- ## variables
 --
 local server = {}
+local players = {}
 
 -- ### update variables
 --
-local updaterate = 1/16
+local updaterate = 1/32
 local lag = 0
+
+-- ### methods
+--
+
+-- ### newPlayer
+--
+-- Returns a new player
+--
+local function newPlayer()
+    return {
+        x = math.random(512),
+        y = math.random(512),
+        size = 10
+    }
+end
 
 -- ## callbacks
 --
@@ -34,6 +50,8 @@ local function onConnect(data, client)
     print("Client " .. client:getIndex() .. " connected.")
     local msg = "Ping."
     client:send("ping", msg)
+
+    table.insert(players, client:getIndex(), newPlayer())
 end
 
 -- ### onDisconnect
@@ -45,6 +63,8 @@ end
 --
 local function onDisconnect(data, client)
         print("Client " .. client:getIndex() .. " disconnected.")
+
+        table.remove(players, client:getIndex())
 end
 
 -- ### onMovement
@@ -56,6 +76,8 @@ end
 --
 local function onMovement(data, client)
     print("Client " .. client:getIndex() .. " moves (" .. data.dx .. ", " .. data.dy .. ").")
+    players[client:getIndex()].x = players[client:getIndex()].x + data.dx
+    players[client:getIndex()].y = players[client:getIndex()].y + data.dy
 end
 
 -- ## love.load
@@ -83,5 +105,7 @@ end
 -- ## love.draw
 --
 function love.draw()
-
+    for _, player in pairs(players) do
+        love.graphics.circle("fill", player.x, player.y, player.size)
+    end
 end

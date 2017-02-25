@@ -19,8 +19,37 @@ local client = {}
 
 -- ### update variables
 --
-local updaterate = 1/16
+local updaterate = 1/32
 local lag = 0
+
+-- ## methods
+--
+
+-- ### updateMovement
+--
+-- Sends movement events to the server
+--
+local function updateMovement()
+    movement = {
+        dx = 0,
+        dy = 0
+    }
+
+    if isDown('a') then
+        movement.dx = movement.dx - 1
+    end
+    if isDown('d') then
+        movement.dx = movement.dx + 1
+    end
+    if isDown('w') then
+        movement.dy = movement.dy - 1
+    end
+    if isDown('s') then
+        movement.dy = movement.dy + 1
+    end
+
+    client:send("movement", movement)
+end
 
 -- ## callbacks
 --
@@ -52,6 +81,9 @@ function love.load()
 
     -- Wire up callbacks
     client:on("connect", onConnect)
+    client:on("disconnect", function()
+        print("DISCONNECTED")
+    end)
     client:on("ping", onPing)
 
     client:connect()
@@ -62,12 +94,7 @@ end
 function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
-        if isDown('a') then
-            client:send("movement", {
-                dx = -1,
-                dy = 0
-            })
-        end
+        updateMovement()
 
         client:update()
 
