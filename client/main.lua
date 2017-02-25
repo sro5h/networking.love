@@ -50,7 +50,10 @@ local function updateMovement()
         movement.dy = movement.dy + 1
     end
 
-    client:send("movement", movement)
+    server:send(bitser.dumps({
+        type = "movement",
+        data = movement
+    }))
 end
 
 -- ## love.load
@@ -68,14 +71,20 @@ end
 function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
+        -- Update movement
+        updateMovement()
+
         -- Get events
         local event = client:service(0)
         while event do
             if event.type == "connect" then
-                print(event.peer, " connected.")
-                event.peer:send(bitser.dumps({ msg="ping" }))
+                print("Connected to server.")
+
             elseif event.type == "disconnect" then
                 print(event.peer, " disconnected.")
+
+            elseif event.type == "receive" then
+                local package = bitser.loads(event.data)
             end
 
             event = client:service(0)
@@ -93,6 +102,6 @@ end
 
 -- ## love.quit
 function love.quit()
-    server:disconnect()
+    server:disconnect(42)
     client:flush()
 end

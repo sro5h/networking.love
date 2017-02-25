@@ -11,6 +11,7 @@
 local enet = require("enet")
 local bitser = require("lib/bitser")
 local tick = require("../tick")
+local util = require("../util")
 
 -- ## variables
 --
@@ -33,7 +34,7 @@ local function newPlayer()
     return {
         x = math.random(512),
         y = math.random(512),
-        size = 10
+        size = 20
     }
 end
 
@@ -56,11 +57,18 @@ function love.update(dt)
         while event do
             if event.type == "connect" then
                 print(event.peer, " connected.")
+                players[event.peer] = newPlayer()
+
             elseif event.type == "disconnect" then
-                print(event.peer, " disconnected.")
+                print(event.peer, "[" .. event.data .. "]" .. " disconnected.")
+                players[event.peer] = nil
+
             elseif event.type == "receive" then
-                local data = bitser.loads(event.data)
-                print(event.peer, " " .. data.msg)
+                local package = bitser.loads(event.data)
+                if package.type == "movement" then
+                    players[event.peer].x = players[event.peer].x + package.data.dx
+                    players[event.peer].y = players[event.peer].y + package.data.dy
+                end
             end
 
             event = server:service(0)
@@ -73,5 +81,7 @@ end
 -- ## love.draw
 --
 function love.draw()
-
+    for _, player in pairs(players) do
+        love.graphics.circle("line", player.x, player.y, player.size)
+    end
 end
