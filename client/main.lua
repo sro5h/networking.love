@@ -17,6 +17,7 @@ local tick = require("../tick")
 --
 local isDown = love.keyboard.isDown
 local client
+local clientId
 local server
 
 -- ### update variables
@@ -85,6 +86,10 @@ function love.update(dt)
 
             elseif event.type == "receive" then
                 local package = bitser.loads(event.data)
+                if package.type == "id" then
+                    print("Received id [" .. package.data .. "].")
+                    clientId = package.data
+                end
             end
 
             event = client:service(0)
@@ -102,6 +107,8 @@ end
 
 -- ## love.quit
 function love.quit()
-    server:disconnect(42)
-    client:flush()
+    if clientId then
+        server:disconnect(clientId)
+        client:flush()
+    end
 end
