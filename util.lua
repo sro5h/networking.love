@@ -1,11 +1,40 @@
+-- ## util
+--
 local util = {}
 
+-- ### util.isCallable
+--
+-- Returns true if variable 'x' is a function or a callable table.
+--
+-- 'x' is a variable
+--
 function util.isCallable(x)
     if type(x) == "function" then return true end
     local mt = getmetatable(x)
     return mt and mt.__call ~= nil
 end
 
+-- ### util.tablefind
+--
+-- Find a 'value' in the table 't' and return its index.
+--
+-- 't'     is a table
+-- 'value' is the value
+--
+function util.tableFind(t, value)
+    for index, val in pairs(t) do
+        if val == value then
+            return index
+        end
+    end
+end
+
+-- ### util.printTable
+--
+-- Print a table 't' and all its elements. Prints nested tables recursively.
+--
+-- 't' is a table
+--
 function util.printTable(t)
     local print_r_cache={}
     local function sub_print_r(t,indent)

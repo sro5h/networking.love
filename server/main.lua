@@ -29,6 +29,9 @@ function love.load()
 
     server = Server.new("localhost:22122")
     server:setSerialization(Bitser.dumps, Bitser.loads)
+    server:on("test", function(client, data)
+        print("Test received: " .. data)
+    end)
 end
 
 -- ## love.update

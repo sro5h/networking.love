@@ -17,29 +17,46 @@ local function connect(self, address)
     print("Connecting to " .. address .. ".")
 end
 
+-- ### disconnect
+--
+-- Attempts to immediately disconnect the client from its server
+--
 local function disconnect(self)
-    if self.server and self.id then
-        self.server:disconnect(self.id)
+    if self.server then
+        self.server:disconnect()
         self.host:flush()
 
         print("Disconnecting from server.")
     end
 end
 
+-- ### onConnect
+--
+-- Gets called when this client connects to its server.
+--
+-- 'peer' is the server
+--
 local function onConnect(self, peer)
     print("Connected to ", peer, ".")
 end
 
+-- ### onDisconnect
+--
+-- Gets called when this client disconnects from its server.
+--
+-- 'peer' is the server
+-- 'data' is a number
+--
 local function onDisconnect(self, peer, data)
-    print("Disconnected from ", peer, ".")
+    print("Disconnected from " .. tostring(peer) .. ".")
 end
 
-local function onIdReceived(self, id)
-    self.id = id
-
-    print("Id " .. id .. " received")
-end
-
+-- ### update
+--
+-- Processes the incoming packages and calls the related callbacks.
+--
+-- 'timeout' is a number
+--
 local function update(self, timeout)
     timeout = timeout or 0
 
@@ -51,9 +68,6 @@ local function update(self, timeout)
             self:onDisconnect(event.peer, event.data)
         elseif event.type == "receive" then
             local package = self._deserialize(event.data)
-            if package.type == "id" then
-                self:onIdReceived(package.data)
-            end
         end
 
         event = self.host:service()

@@ -72,6 +72,7 @@ function love.update(dt)
     if lag > updaterate then
         -- Update movement
         --updateMovement()
+        client.server:send(client._serialize({ type = "test", data = "Hello!" }))
 
         -- Update client
         client:update()
