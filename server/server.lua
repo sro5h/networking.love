@@ -49,11 +49,12 @@ end
 --
 local function onConnect(self, peer)
     local id = self:_newId()
-    local address = tostring(peer)
+    local address = tostring(peer) -- better use the index
 
     -- Add a client id
     self.ids[address] = id
     print(address .. " [id = " .. id .. "]" .. " connected.")
+    print("Peer index: " .. peer:index())
 
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
@@ -73,6 +74,7 @@ local function onDisconnect(self, peer)
     -- Remove the client id
     self.ids[address] = nil
     print(address .. " [id = " .. id .. "]" .. " disconnected.")
+    print("Peer index: " .. peer:index())
 
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
