@@ -31,7 +31,7 @@ end
 -- ## module methods
 --
 
--- ### newId
+-- ### _newId
 --
 -- Returns a unique id.
 --
@@ -39,6 +39,25 @@ local function _newId(self)
     local id = self.nextId
     self.nextId = self.nextId + 1
     return id
+end
+
+-- ### _call
+--
+-- Calls the callback related to 'event'.
+--
+-- 'event' is a string
+-- 'peer'  is a peer
+-- 'data'  is the packet data
+--
+local function _call(self, event, peer, data)
+    local clientId = self.ids[peer:index()]
+    -- Assume a valid client id
+    assert(clientId)
+
+    -- Call the callback if not nil
+    if self.callbacks[event] then
+        self.callbacks[event](clientId, data)
+    end
 end
 
 -- ### onConnect
@@ -58,9 +77,7 @@ local function onConnect(self, peer)
     print("Peer index: " .. peer:index())
 
     -- Call connect callback
-    if self.callbacks["connect"] then
-        self.callbacks["connect"](peer, nil)
-    end
+    self:_call("connect", peer, nil)
 
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
@@ -78,18 +95,40 @@ local function onDisconnect(self, peer, data)
     local index = peer:index()
     local id = self.ids[index]
 
+    -- Call disconnect callback
+    self:_call("disconnect", peer, data)
+
     -- Remove the client id
     self.ids[index] = nil
     print(address .. " [id = " .. id .. "]" .. " disconnected.")
     print("Peer index: " .. index)
 
-    -- Call disconnect callback
-    if self.callbacks["disconnect"] then
-        self.callbacks["disconnect"](peer, data)
-    end
 
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
+end
+
+-- ### onReceive
+--
+-- Gets called when a peer sends a packet.
+--
+-- 'peer' is the peer
+-- 'data' is the packet
+--
+local function onReceive(self, peer, data)
+    -- Deserialize the packet
+    local packet = self._deserialize(data)
+    -- Check if packet is valid
+    if type(packet.type) == "string" then
+        if self.callbacks[packet.type] then
+            -- Call the callback of the event
+            self:_call(packet.type, peer, packet.data)
+        end
+    else
+        -- Package is not valid
+        print("Invalid packet received.")
+        util.printTable(packet)
+    end
 end
 
 -- ### on
@@ -119,19 +158,7 @@ local function update(self, timeout)
         elseif event.type == "disconnect" then
             self:onDisconnect(event.peer, event.data)
         elseif event.type == "receive" then
-            -- Deserialize the packet
-            local packet = self._deserialize(event.data)
-            -- Check if packet is valid
-            if type(packet.type) == "string" then
-                if self.callbacks[packet.type] then
-                    -- Call the callback of the event if not nil
-                    self.callbacks[packet.type](event.peer, packet.data)
-                end
-            else
-                -- Package has not the assumed structure
-                print("Invalid packet received.")
-                util.printTable(packet)
-            end
+            self:onReceive(event.peer, event.data)
         end
 
         event = self.host:service()
@@ -166,6 +193,7 @@ function server.new(address)
     _server.callbacks = {}
 
     _server._newId = _newId
+    _server._call = _call
     _server._serialize = nil
     _server._deserialize = nil
 
@@ -173,6 +201,7 @@ function server.new(address)
     _server.on = on
     _server.onConnect = onConnect
     _server.onDisconnect = onDisconnect
+    _server.onReceive = onReceive
     _server.setSerialization = setSerialization
 
     return _server
