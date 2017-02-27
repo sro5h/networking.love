@@ -29,7 +29,7 @@ local lag = 0
 --
 -- Sends movement events to the server
 --
-local function updateMovement()
+local function sendUpdate()
     movement = {
         dx = 0,
         dy = 0
@@ -48,10 +48,7 @@ local function updateMovement()
         movement.dy = movement.dy + 1
     end
 
-    server:send(bitser.dumps({
-        type = "update",
-        data = movement
-    }))
+    client:send("update", movement)
 end
 
 -- ## love.load
@@ -71,8 +68,7 @@ function love.update(dt)
     lag = lag + dt
     if lag > updaterate then
         -- Update movement
-        --updateMovement()
-        client:send("update", { dx = 1, dy = 1 })
+        sendUpdate()
 
         -- Update client
         client:update()
