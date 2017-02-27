@@ -45,11 +45,14 @@ function love.load()
 
     server = Server.new("localhost:22122")
     server:setSerialization(Bitser.dumps, Bitser.loads)
-    server:on("connect", function(client)
-        players[1] = newPlayer()
+    server:on("connect", function(clientId)
+        players[clientId] = newPlayer()
     end)
-    server:on("update", function(client, data)
-        local i = 1
+    server:on("disconnect", function(clientId)
+        players[clientId] = nil
+    end)
+    server:on("update", function(clientId, data)
+        local i = clientId
         players[i].x = players[i].x + data.dx
         players[i].y = players[i].y + data.dy
     end)
