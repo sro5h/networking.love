@@ -15,11 +15,27 @@ local Util = require("../util")
 -- ## variables
 --
 local server = {}
+local players = {}
 
 -- ### update variables
 --
 local updaterate = 1/32
 local lag = 0
+
+-- ## methods
+--
+
+-- ### newPlayer
+--
+-- Returns a new player object.
+--
+function newPlayer()
+    return {
+        x = math.random(512),
+        y = math.random(512),
+        size = 15
+    }
+end
 
 -- ## love.load
 --
@@ -29,8 +45,13 @@ function love.load()
 
     server = Server.new("localhost:22122")
     server:setSerialization(Bitser.dumps, Bitser.loads)
-    server:on("test", function(client, data)
-        print("Test received: " .. data)
+    server:on("connect", function(client)
+        players[1] = newPlayer()
+    end)
+    server:on("update", function(client, data)
+        local i = 1
+        players[i].x = players[i].x + data.dx
+        players[i].y = players[i].y + data.dy
     end)
 end
 
@@ -49,5 +70,7 @@ end
 -- ## love.draw
 --
 function love.draw()
-
+    for _, player in pairs(players) do
+        love.graphics.circle("line", player.x, player.y, player.size)
+    end
 end

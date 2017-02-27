@@ -49,7 +49,7 @@ local function updateMovement()
     end
 
     server:send(bitser.dumps({
-        type = "movement",
+        type = "update",
         data = movement
     }))
 end
@@ -72,7 +72,7 @@ function love.update(dt)
     if lag > updaterate then
         -- Update movement
         --updateMovement()
-        client.server:send(client._serialize({ type = "test", data = "Hello!" }))
+        client:send("update", { dx = 1, dy = 1 })
 
         -- Update client
         client:update()
