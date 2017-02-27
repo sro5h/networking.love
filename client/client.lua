@@ -12,6 +12,12 @@ local enet = require("enet")
 --
 local client = {}
 
+-- ### connect
+--
+-- Attempts to connect to the server at 'address'.
+--
+-- 'address' is a string
+--
 local function connect(self, address)
     self.server = self.host:connect(address)
     print("Connecting to " .. address .. ".")
@@ -29,6 +35,12 @@ local function disconnect(self)
         print("Disconnecting from server.")
     end
 end
+
+-- ### send
+--
+-- Sends the packet 'data' to the server.
+--
+-- 'data' is a table
 
 -- ### onConnect
 --
@@ -53,7 +65,7 @@ end
 
 -- ### update
 --
--- Processes the incoming packages and calls the related callbacks.
+-- Processes the incoming packets and calls the related callbacks.
 --
 -- 'timeout' is a number
 --
@@ -67,7 +79,7 @@ local function update(self, timeout)
         elseif event.type == "disconnect" then
             self:onDisconnect(event.peer, event.data)
         elseif event.type == "receive" then
-            local package = self._deserialize(event.data)
+            local packet = self._deserialize(event.data)
         end
 
         event = self.host:service()

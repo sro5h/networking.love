@@ -106,7 +106,7 @@ end
 
 -- ### update
 --
--- Processes the incoming packages and calls the related callbacks.
+-- Processes the incoming packets and calls the related callbacks.
 --
 -- 'timeout' is a number
 --
@@ -119,18 +119,18 @@ local function update(self, timeout)
         elseif event.type == "disconnect" then
             self:onDisconnect(event.peer, event.data)
         elseif event.type == "receive" then
-            -- Deserialize the package
-            local package = self._deserialize(event.data)
-            -- Check if package is valid
-            if type(package.type) == "string" then
-                if self.callbacks[package.type] then
+            -- Deserialize the packet
+            local packet = self._deserialize(event.data)
+            -- Check if packet is valid
+            if type(packet.type) == "string" then
+                if self.callbacks[packet.type] then
                     -- Call the callback of the event if not nil
-                    self.callbacks[package.type](event.peer, package.data)
+                    self.callbacks[packet.type](event.peer, packet.data)
                 end
             else
                 -- Package has not the assumed structure
-                print("Invalid package received.")
-                util.printTable(package)
+                print("Invalid packet received.")
+                util.printTable(packet)
             end
         end
 
