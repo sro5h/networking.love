@@ -38,9 +38,15 @@ end
 
 -- ### send
 --
--- Sends the packet 'data' to the server.
+-- Sends the 'data' to the server triggering the 'event'.
 --
--- 'data' is a table
+-- 'event' is a string
+-- 'data'  is a table
+--
+local function send(self, event, data)
+    local packet = self._serialize({ type = event, data = data })
+    self.server:send(packet)
+end
 
 -- ### onConnect
 --
@@ -115,6 +121,7 @@ function client.new()
 
     _client.connect = connect
     _client.disconnect = disconnect
+    _client.send = send
     _client.update = update
     _client.onConnect = onConnect
     _client.onDisconnect = onDisconnect
