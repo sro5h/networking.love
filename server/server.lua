@@ -57,6 +57,11 @@ local function onConnect(self, peer)
     print(address .. " [id = " .. id .. "]" .. " connected.")
     print("Peer index: " .. peer:index())
 
+    -- Call connect callback
+    if self.callbacks["connect"] then
+        self.callbacks["connect"](peer, nil)
+    end
+
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
 end
@@ -68,7 +73,7 @@ end
 -- 'peer' is the peer
 -- 'id'   is a number
 --
-local function onDisconnect(self, peer)
+local function onDisconnect(self, peer, data)
     local address = tostring(peer)
     local index = peer:index()
     local id = self.ids[index]
@@ -77,6 +82,11 @@ local function onDisconnect(self, peer)
     self.ids[index] = nil
     print(address .. " [id = " .. id .. "]" .. " disconnected.")
     print("Peer index: " .. index)
+
+    -- Call disconnect callback
+    if self.callbacks["disconnect"] then
+        self.callbacks["disconnect"](peer, data)
+    end
 
     -- Remove later
     print("LOG: " .. "id count: " .. tablelength(self.ids))
