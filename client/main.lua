@@ -16,6 +16,7 @@ local Bitser = require("lib/bitser")
 --
 local isDown = love.keyboard.isDown
 local client
+local player
 
 -- ### update variables
 --
@@ -60,6 +61,13 @@ function love.load()
     client = Client.new()
     client:setSerialization(Bitser.dumps, Bitser.loads)
     client:connect("localhost:22122")
+    client:on("tick", function(data)
+        player = {
+            x = data.x,
+            y = data.y,
+            size = 15
+        }
+    end)
 end
 
 -- ## love.update
@@ -80,7 +88,9 @@ end
 -- ## love.draw
 --
 function love.draw()
-
+    if player then
+        love.graphics.circle("line", player.x, player.y, player.size)
+    end
 end
 
 -- ## love.quit

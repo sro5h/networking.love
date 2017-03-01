@@ -7,10 +7,25 @@
 -- ## modules
 --
 local enet = require("enet")
+local util = require("../util")
 
 -- ## client
 --
 local client = {}
+
+-- ### _call
+--
+-- Calls the callback related to 'event'.
+--
+-- 'event' is a string
+-- 'data'  is the packet data
+--
+local function _call(self, event, data)
+    -- Call the callback if not nil
+    if self.callbacks[event] then
+        self.callbacks[event](data)
+    end
+end
 
 -- ### connect
 --
@@ -56,6 +71,9 @@ end
 --
 local function onConnect(self, peer)
     print("Connected to ", peer, ".")
+
+    -- Call connect callback
+    self:_call("connect", nil)
 end
 
 -- ### onDisconnect
@@ -67,6 +85,38 @@ end
 --
 local function onDisconnect(self, peer, data)
     print("Disconnected from " .. tostring(peer) .. ".")
+
+    -- Call disconnect callback
+    self:_call("connect", data)
+end
+
+-- ### onReceive
+--
+-- Gets called when the server sends a packet.
+--
+-- 'peer' is the server
+-- 'data' is the packet
+--
+local function onReceive(self, peer, data)
+    -- Deserialize the packet
+    local packet = self._deserialize(data)
+    -- Check if packet is valid
+    if type(packet.type) == "string" then
+        -- Call the callback of the event
+        self:_call(packet.type, packet.data)
+    end
+end
+
+-- ### on
+--
+-- Sets a callback for an event
+--
+-- 'event'    is a string
+-- 'callback' is callable
+--
+local function on(self, event, callback)
+    assert(util.isCallable(callback))
+    self.callbacks[event] = callback
 end
 
 -- ### update
@@ -85,7 +135,7 @@ local function update(self, timeout)
         elseif event.type == "disconnect" then
             self:onDisconnect(event.peer, event.data)
         elseif event.type == "receive" then
-            local packet = self._deserialize(event.data)
+            self:onReceive(event.peer, event.data)
         end
 
         event = self.host:service()
@@ -115,7 +165,9 @@ function client.new()
     _client.host = enet.host_create()
     _client.server = {}
     _client.id = nil
+    _client.callbacks = {}
 
+    _client._call = _call
     _client._serialize = nil
     _client._deserialize = nil
 
@@ -123,9 +175,10 @@ function client.new()
     _client.disconnect = disconnect
     _client.send = send
     _client.update = update
+    _client.on = on
     _client.onConnect = onConnect
     _client.onDisconnect = onDisconnect
-    _client.onIdReceived = onIdReceived
+    _client.onReceive = onReceive
     _client.setSerialization = setSerialization
 
     return _client

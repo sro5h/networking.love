@@ -120,15 +120,25 @@ local function onReceive(self, peer, data)
     local packet = self._deserialize(data)
     -- Check if packet is valid
     if type(packet.type) == "string" then
-        if self.callbacks[packet.type] then
-            -- Call the callback of the event
-            self:_call(packet.type, peer, packet.data)
-        end
+        -- Call the callback of the event
+        self:_call(packet.type, peer, packet.data)
     else
         -- Package is not valid
         print("Invalid packet received.")
         util.printTable(packet)
     end
+end
+
+-- ### sendToAll
+--
+-- Sends a packet to all peers.
+--
+-- 'event' is a string
+-- 'data'  is a table
+--
+local function sendToAll(self, event, data)
+    local packet = self._serialize({ type = event, data = data})
+    self.host:broadcast(packet)
 end
 
 -- ### on
@@ -151,6 +161,7 @@ end
 --
 local function update(self, timeout)
     timeout = timeout or 0
+
     local event = self.host:service(timeout)
     while event do
         if event.type == "connect" then
@@ -198,6 +209,7 @@ function server.new(address)
     _server._deserialize = nil
 
     _server.update = update
+    _server.sendToAll = sendToAll
     _server.on = on
     _server.onConnect = onConnect
     _server.onDisconnect = onDisconnect

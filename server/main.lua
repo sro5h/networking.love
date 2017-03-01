@@ -65,6 +65,9 @@ function love.update(dt)
     if lag > updaterate then
         -- Update server
         server:update()
+        if players[1] then
+            server:sendToAll("tick", { x = players[1].x, y = players[1].y })
+        end
 
         lag = lag - updaterate
     end
