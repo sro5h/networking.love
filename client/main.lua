@@ -68,6 +68,15 @@ function love.load()
             size = 15
         }
     end)
+    client:on("clientConnect", function(data)
+        print("Client connected: " .. data.id)
+    end)
+    client:on("clientDisconnect", function(data)
+        print("Client disconnected: " .. data.id)
+    end)
+    client:on("init", function(data)
+        print("Init received.")
+    end)
 end
 
 -- ## love.update

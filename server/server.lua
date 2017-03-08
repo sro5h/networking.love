@@ -76,6 +76,12 @@ local function onConnect(self, peer)
     print(address .. " [id = " .. id .. "]" .. " connected.")
     print("Peer index: " .. peer:index())
 
+    -- Send init event to the new client
+    self:send("init", { id = id, clients = ids }, id)
+
+    -- Send connect event to all clients
+    self:sendToAllBut("clientConnect", { id = id }, id)
+
     -- Call connect callback
     self:_call("connect", peer, nil)
 
@@ -94,6 +100,9 @@ local function onDisconnect(self, peer, data)
     local address = tostring(peer)
     local index = peer:index()
     local id = self.ids[index]
+
+    -- Send connect event to all clients
+    self:sendToAllBut("clientDisconnect", { id = id }, id)
 
     -- Call disconnect callback
     self:_call("disconnect", peer, data)
@@ -129,6 +138,24 @@ local function onReceive(self, peer, data)
     end
 end
 
+-- ### send
+--
+-- Sends a packet to a peer.
+--
+-- 'event' is a string
+-- 'data'  is a table
+-- 'id'    is a peer id
+--
+local function send(self, event, data, id)
+    local packet = self._serialize({ type = event, data = data })
+
+    for index,value in pairs(self.ids) do
+        if id == value then
+            self.host:get_peer(index):send(packet)
+        end
+    end
+end
+
 -- ### sendToAll
 --
 -- Sends a packet to all peers.
@@ -137,8 +164,26 @@ end
 -- 'data'  is a table
 --
 local function sendToAll(self, event, data)
-    local packet = self._serialize({ type = event, data = data})
+    local packet = self._serialize({ type = event, data = data })
     self.host:broadcast(packet)
+end
+
+-- ### sendToAllBut
+--
+-- Sends a packet to all but 'id'.
+--
+-- 'event' is a string
+-- 'data'  is a table
+-- 'id'    is a peer id
+--
+local function sendToAllBut(self, event, data, id)
+    local packet = self._serialize({ type = event, data = data })
+
+    for index,value in pairs(self.ids) do
+        if id ~= value then
+            self.host:get_peer(index):send(packet)
+        end
+    end
 end
 
 -- ### on
@@ -209,7 +254,9 @@ function server.new(address)
     _server._deserialize = nil
 
     _server.update = update
+    _server.send = send
     _server.sendToAll = sendToAll
+    _server.sendToAllBut = sendToAllBut
     _server.on = on
     _server.onConnect = onConnect
     _server.onDisconnect = onDisconnect
